@@ -32,6 +32,8 @@ class SqfliteDatasource implements IDatasource {
 
       bool isParticipantCreated = false;
 
+      await txn.delete('transactions',
+          where: 'id = ?', whereArgs: [transactionWrapper.transaction.id]);
       for (var transaction in transactionList) {
         if (!isParticipantCreated) {
           List<Map<String, dynamic>> splitParticipantList = currentTransaction

@@ -169,7 +169,7 @@ class TransactionWrapper {
     }
 
     final TransactionWrapper transactionWrapper = TransactionWrapper(
-      method: json['method'],
+      method: '', // TODO: Adding Blank method for now no need to use static method
       transaction: transaction,
       splitDetails: (json['split_details'] as List)
           .map((item) => SplitDetail(
