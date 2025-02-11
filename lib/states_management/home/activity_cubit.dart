@@ -7,7 +7,7 @@ class ActivitiesCubit extends Cubit<List<Activity>> {
 
   ActivitiesCubit(this.viewModel) : super([]);
 
-  Future<void> ledgers() async {
+  Future<void> activities() async {
     final activities = await viewModel.getActivities();
     emit(activities);
   }

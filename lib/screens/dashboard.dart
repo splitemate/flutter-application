@@ -35,6 +35,7 @@ class _DashboardState extends State<Dashboard> {
   void initState() {
     print('Dashboard initState');
     super.initState();
+    context.read<ActivitiesCubit>().activities();
     _webSocketService = WebSocketService.getInstance();
     messageStreamService = MessageStreamService(_webSocketService);
     _initializeWebSocketAndBloc();

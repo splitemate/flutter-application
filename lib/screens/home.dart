@@ -22,7 +22,7 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    context.read<ActivitiesCubit>().ledgers();
+    context.read<ActivitiesCubit>().activities();
     super.initState();
   }
 
@@ -193,6 +193,7 @@ class _HomeState extends State<Home> {
           Container(
             child: BlocBuilder<ActivitiesCubit, List<Activity>>(
               builder: (__, activities) {
+                this.activities = activities;
                 if (activities.isEmpty) {
                   return Container(
                     child: Text('hii'),
@@ -202,8 +203,7 @@ class _HomeState extends State<Home> {
                 return BlocBuilder<ActivityBloc, ActivityState>(
                   builder: (context, activityState) {
                     if (activityState is ActivityReceivedSuccess) {
-                      print(
-                          "New activity received: ${activityState.activity}");
+                      print("New activity received: ${activityState.activity}");
                     }
                     return _buildListView(size);
                   },
@@ -216,25 +216,28 @@ class _HomeState extends State<Home> {
     );
   }
 
-  _buildListView(size) {
-    return Padding(
-      padding: EdgeInsets.only(top: size.width * 0.044),
-      child: ListView.builder(
-        itemCount: activities.length,
-        itemBuilder: (context, index) {
-          final item = activities[index];
-          return GestureDetector(
-            child: TransactionCard(
-              name: item.id,
-              time: getTimeInLocalZone(item.createDate),
-              amount: 0,
-              imageUrl:
-                  'https://img.freepik.com/free-photo/closeup-shot-lion-s-face-isolated-dark_181624-35975.jpg?t=st=1732968582~exp=1732972182~hmac=dcac81866b958c362076383c025353c8c83e9f949f1382840e973539d0d3fa1f&w=1060',
-              isPositive: true,
-            ),
-            onTap: () async {},
-          );
-        },
+  _buildListView(Size size) {
+    return Expanded(
+      child: Padding(
+        padding: EdgeInsets.only(top: size.width * 0.044),
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: activities.length,
+          itemBuilder: (context, index) {
+            Activity item = activities[index];
+            return GestureDetector(
+              child: TransactionCard(
+                name: item.id,
+                time: getTimeInLocalZone(item.createdDate),
+                amount: index.toDouble(),
+                imageUrl:
+                    'https://img.freepik.com/free-photo/closeup-shot-lion-s-face-isolated-dark_181624-35975.jpg?t=st=1732968582~exp=1732972182~hmac=dcac81866b958c362076383c025353c8c83e9f949f1382840e973539d0d3fa1f&w=1060',
+                isPositive: true,
+              ),
+              onTap: () async {},
+            );
+          },
+        ),
       ),
     );
   }

@@ -27,7 +27,7 @@ class Activity {
       'transaction_id': transactionId,
       'activity_type': activityType,
       'related_users_ids': jsonEncode(relatedUsersIds),
-      'create_date': createdDate.toIso8601String(),
+      'created_date': createdDate.toIso8601String(),
     };
   }
 
@@ -38,7 +38,9 @@ class Activity {
       groupId: map['group_id'] as String,
       transactionId: map['transaction_id'] as String,
       activityType: map['activity_type'] as String,
-      relatedUsersIds: List<String>.from(map['related_users_ids']),
+      relatedUsersIds: (map['related_users_ids'] is String)
+          ? List<String>.from(jsonDecode(map['related_users_ids']))
+          : List<String>.from(map['related_users_ids'] ?? []),
       createdDate: DateTime.parse(map['created_date']),
     );
   }

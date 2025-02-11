@@ -322,7 +322,7 @@ class SqfliteDatasource implements IDatasource {
   Future<List<Activity>> findAllActivities() async {
     final listOfActivityMap = await _db.query(
       'activity',
-      orderBy: 'create_date DESC',
+      orderBy: 'created_date DESC',
     );
     return await Future.wait(listOfActivityMap.map((row) async {
       Activity activity = Activity.fromMap(row);

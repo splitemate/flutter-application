@@ -26,7 +26,7 @@ class LocalDatabaseFactory {
                     transaction_id TEXT,
                     activity_type TEXT,
                     related_users_ids TEXT,
-                    create_date TEXT
+                    created_date TEXT
         )""").catchError((e) => print('error creating activity table: $e'));
   }
 
