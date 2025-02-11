@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:splitemate/data/datasource/datasource_contract.dart';
+import 'package:splitemate/models/activity.dart';
 import 'package:splitemate/models/ledger.dart';
 import 'package:splitemate/models/transaction_wrapper.dart';
 import 'package:splitemate/models/user.dart';
@@ -29,6 +30,11 @@ abstract class BaseViewModel {
       }
     }
     await _datasource.addTransaction(transactionWrapper);
+  }
+
+  @protected
+  Future<void> addActivity(Activity activity) async {
+    await _datasource.addActivity(activity);
   }
 
   Future<void> createNewLedger(Ledger ledger) async {

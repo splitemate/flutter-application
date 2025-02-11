@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:splitemate/models/activity.dart';
 import 'package:splitemate/models/transaction.dart' as tra;
 import 'package:splitemate/data/datasource/datasource_contract.dart';
 import 'package:splitemate/models/ledger.dart';
@@ -304,5 +305,28 @@ class SqfliteDatasource implements IDatasource {
     WHERE s.transaction_id = ?;
   ''', [transactionId]);
     return result.map((row) => Map<String, dynamic>.from(row)).toList();
+  }
+
+  @override
+  Future<void> addActivity(Activity activity) async {
+    await _db.transaction((txn) async {
+      await txn.insert(
+        'activity',
+        activity.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
+  }
+
+  @override
+  Future<List<Activity>> findAllActivities() async {
+    final listOfActivityMap = await _db.query(
+      'activity',
+      orderBy: 'create_date DESC',
+    );
+    return await Future.wait(listOfActivityMap.map((row) async {
+      Activity activity = Activity.fromMap(row);
+      return activity;
+    }));
   }
 }

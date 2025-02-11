@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'package:splitemate/states_management/bloc/activity/activity_bloc.dart';
+import 'package:splitemate/states_management/home/activity_cubit.dart';
 import 'package:splitemate/theme.dart';
+import 'package:splitemate/viewmodels/activity_view_model.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:splitemate/providers/user_provider.dart';
 import 'package:splitemate/router_generator.dart';
@@ -46,7 +49,9 @@ class _CompositionRootState extends State<CompositionRoot> {
   late Database db;
   late IDatasource datasource;
   late LedgersViewModel viewModel;
+  late ActivitiesViewModel activitiesViewModel;
   late LedgersCubit ledgersCubit;
+  late ActivitiesCubit activitiesCubit;
   CurrentUser selfUser = CurrentUser.empty();
   late MessageStreamService messageStreamService;
   Map<String, dynamic> userDetailsMap = {};
@@ -64,10 +69,12 @@ class _CompositionRootState extends State<CompositionRoot> {
     db = await LocalDatabaseFactory().createDatabase();
     datasource = SqfliteDatasource(db);
     viewModel = LedgersViewModel(datasource);
+    activitiesViewModel = ActivitiesViewModel(datasource);
 
     final ws = WebSocketService.getInstance();
     messageStreamService = MessageStreamService(ws);
     ledgersCubit = LedgersCubit(viewModel);
+    activitiesCubit = ActivitiesCubit(activitiesViewModel);
 
     if (_accessToken.isNotEmpty) {
       try {
@@ -104,7 +111,9 @@ class _CompositionRootState extends State<CompositionRoot> {
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: ledgersCubit),
+        BlocProvider.value(value: activitiesCubit),
         BlocProvider.value(value: TransactionBloc(messageStreamService)),
+        BlocProvider.value(value: ActivityBloc(messageStreamService)),
         BlocProvider<SignInBloc>(
           create: (_) => SignInBloc(
             authRepo: repositoryStore.authRepository,

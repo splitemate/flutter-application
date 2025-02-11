@@ -1,11 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:splitemate/colors.dart';
+import 'package:splitemate/models/activity.dart';
 import 'package:splitemate/providers/user_provider.dart';
+import 'package:splitemate/states_management/bloc/activity/activity_bloc.dart';
+import 'package:splitemate/states_management/home/activity_cubit.dart';
+import 'package:splitemate/utils/time.dart';
 import 'package:splitemate/widgets/cards/amount_summary.dart';
+import 'package:splitemate/widgets/cards/transaction_card.dart';
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
   const Home({super.key});
+
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  var activities = [];
+
+  @override
+  void initState() {
+    context.read<ActivitiesCubit>().ledgers();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,9 +191,50 @@ class Home extends StatelessWidget {
             ),
           ),
           Container(
-            child: Text('HI'),
+            child: BlocBuilder<ActivitiesCubit, List<Activity>>(
+              builder: (__, activities) {
+                if (activities.isEmpty) {
+                  return Container(
+                    child: Text('hii'),
+                  );
+                }
+
+                return BlocBuilder<ActivityBloc, ActivityState>(
+                  builder: (context, activityState) {
+                    if (activityState is ActivityReceivedSuccess) {
+                      print(
+                          "New activity received: ${activityState.activity}");
+                    }
+                    return _buildListView(size);
+                  },
+                );
+              },
+            ),
           )
         ],
+      ),
+    );
+  }
+
+  _buildListView(size) {
+    return Padding(
+      padding: EdgeInsets.only(top: size.width * 0.044),
+      child: ListView.builder(
+        itemCount: activities.length,
+        itemBuilder: (context, index) {
+          final item = activities[index];
+          return GestureDetector(
+            child: TransactionCard(
+              name: item.id,
+              time: getTimeInLocalZone(item.createDate),
+              amount: 0,
+              imageUrl:
+                  'https://img.freepik.com/free-photo/closeup-shot-lion-s-face-isolated-dark_181624-35975.jpg?t=st=1732968582~exp=1732972182~hmac=dcac81866b958c362076383c025353c8c83e9f949f1382840e973539d0d3fa1f&w=1060',
+              isPositive: true,
+            ),
+            onTap: () async {},
+          );
+        },
       ),
     );
   }

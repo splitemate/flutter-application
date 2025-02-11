@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:splitemate/models/current_user.dart';
+import 'package:splitemate/states_management/bloc/activity/activity_bloc.dart';
+import 'package:splitemate/states_management/home/activity_cubit.dart';
 import 'package:splitemate/utils/const.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:splitemate/service/message_stream_service.dart';
@@ -33,7 +35,6 @@ class _DashboardState extends State<Dashboard> {
   void initState() {
     print('Dashboard initState');
     super.initState();
-    // context.read<LedgersCubit>().ledgers();
     _webSocketService = WebSocketService.getInstance();
     messageStreamService = MessageStreamService(_webSocketService);
     _initializeWebSocketAndBloc();
@@ -41,10 +42,12 @@ class _DashboardState extends State<Dashboard> {
 
   Future<void> _initializeWebSocketAndBloc() async {
     final transactionBloc = context.read<TransactionBloc>();
+    final activityBloc = context.read<ActivityBloc>();
 
     try {
       if (_webSocketService.isConnected) {
         transactionBloc.add(const TransactionSubscribed());
+        activityBloc.add(const ActivitySubscribed());
         return;
       }
 
@@ -54,9 +57,9 @@ class _DashboardState extends State<Dashboard> {
       );
       print('WebSocket connected successfully');
 
-      // Use the captured bloc instead of accessing context again
       if (mounted) {
         transactionBloc.add(const TransactionSubscribed());
+        activityBloc.add(const ActivitySubscribed());
       }
 
       _listenToTransactionUpdates();
@@ -73,12 +76,20 @@ class _DashboardState extends State<Dashboard> {
 
   void _listenToTransactionUpdates() {
     final ledgersCubit = context.read<LedgersCubit>();
+    final activitiesCubit = context.read<ActivitiesCubit>();
 
     context.read<TransactionBloc>().stream.listen((state) async {
       if (state is TransactionReceivedSuccess) {
         print("New transaction received: ${state.transactionWrapper}");
         await ledgersCubit.viewModel
             .receivedTransaction(state.transactionWrapper);
+      }
+    });
+
+    context.read<ActivityBloc>().stream.listen((state) async {
+      if (state is ActivityReceivedSuccess) {
+        print("New activity received: ${state.activity}");
+        await activitiesCubit.viewModel.receivedActivity(state.activity);
       }
     });
   }

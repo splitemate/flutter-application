@@ -11,10 +11,23 @@ class LocalDatabaseFactory {
   }
 
   void populateDb(Database db, int version) async {
+    await _createActivityTable(db);
     await _createUserTable(db);
     await _createSplitDetailsTable(db);
     await _createLedgerTable(db);
     await _createTransactionTable(db);
+  }
+
+  _createActivityTable(Database db) async {
+    await db.execute("""CREATE TABLE activity(
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT,
+                    group_id TEXT,
+                    transaction_id TEXT,
+                    activity_type TEXT,
+                    related_users_ids TEXT,
+                    create_date TEXT
+        )""").catchError((e) => print('error creating activity table: $e'));
   }
 
   _createUserTable(Database db) async {
