@@ -84,6 +84,7 @@ class _DashboardState extends State<Dashboard> {
         print("New transaction received: ${state.transactionWrapper}");
         await ledgersCubit.viewModel
             .receivedTransaction(state.transactionWrapper);
+        ledgersCubit.ledgers(state.transactionWrapper.type);
       }
     });
 
@@ -91,6 +92,7 @@ class _DashboardState extends State<Dashboard> {
       if (state is ActivityReceivedSuccess) {
         print("New activity received: ${state.activity}");
         await activitiesCubit.viewModel.receivedActivity(state.activity);
+        activitiesCubit.activities();
       }
     });
   }

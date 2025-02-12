@@ -190,26 +190,21 @@ class _HomeState extends State<Home> {
               ],
             ),
           ),
-          Container(
-            child: BlocBuilder<ActivitiesCubit, List<Activity>>(
-              builder: (__, activities) {
-                this.activities = activities;
-                if (activities.isEmpty) {
-                  return Container(
-                    child: Text('hii'),
-                  );
-                }
-
-                return BlocBuilder<ActivityBloc, ActivityState>(
-                  builder: (context, activityState) {
-                    if (activityState is ActivityReceivedSuccess) {
-                      print("New activity received: ${activityState.activity}");
-                    }
-                    return _buildListView(size);
-                  },
+          BlocBuilder<ActivitiesCubit, List<Activity>>(
+            builder: (__, activities) {
+              this.activities = activities;
+              if (activities.isEmpty) {
+                return Container(
+                  child: Text('hii'),
                 );
-              },
-            ),
+              }
+
+              return BlocBuilder<ActivityBloc, ActivityState>(
+                builder: (context, activityState) {
+                  return _buildListView(size);
+                },
+              );
+            },
           )
         ],
       ),

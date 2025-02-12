@@ -315,6 +315,7 @@ class SqfliteDatasource implements IDatasource {
         activity.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
+      print('Activity Added');
     });
   }
 
