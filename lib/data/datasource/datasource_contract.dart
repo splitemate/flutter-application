@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:splitemate/models/activity.dart';
 import 'package:splitemate/models/receipt.dart';
 import 'package:splitemate/models/local_transactions.dart';
@@ -20,4 +22,6 @@ abstract class IDatasource {
   Future<void> updateExistingLedger(Ledger ledger);
   Future<void> insertUsers(List<User> users);
   Future<List<User>> fetchUsersByIds(List<String> ids);
+  Future<int> getLatestActivity();
+  Future<void> addBulkTransactions(List<TransactionWrapper> transactionWrapperList);
 }

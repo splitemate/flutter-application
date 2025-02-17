@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'package:splitemate/models/activity.dart';
 import 'package:splitemate/models/transaction.dart' as tra;
 import 'package:splitemate/data/datasource/datasource_contract.dart';
@@ -329,5 +330,119 @@ class SqfliteDatasource implements IDatasource {
       Activity activity = Activity.fromMap(row);
       return activity;
     }));
+  }
+
+  @override
+  Future<int> getLatestActivity() async {
+    final result = await _db.rawQuery('SELECT MAX(id) AS max_id FROM activity');
+    if (result.isNotEmpty && result.first['max_id'] != null) {
+      return int.tryParse(result.first['max_id'].toString()) ?? 0;
+    }
+    return 0;
+  }
+
+  @override
+  Future<void> addBulkTransactions(
+      List<TransactionWrapper> transactionWrapperList) async {
+    final Map<String, User> uniqueUsersMap = {};
+    final Map<String, Ledger> uniqueLedgersMap = {};
+    final List<Map<String, dynamic>> transactionRows = [];
+    final List<Map<String, dynamic>> splitDetailsRows = [];
+
+    for (var tw in transactionWrapperList) {
+      for (var user in tw.members) {
+        if (user.id != null) {
+          uniqueUsersMap[user.id!] = user;
+        }
+      }
+
+      if (tw.transaction.groupId.isNotEmpty) {
+        final Ledger groupLedger = Ledger(
+          tw.transaction.groupId,
+          LedgerType.group,
+          members: tw.groupInfo.groupParticipants,
+          name: tw.groupInfo.name,
+          amount: 0,
+          createdAt: tw.transaction.createdAt,
+          updatedAt: tw.transaction.updatedAt,
+        );
+        final ledgerKey = '${groupLedger.id}_${groupLedger.type.value()}';
+        uniqueLedgersMap[ledgerKey] = groupLedger;
+      } else {
+        for (var lb in tw.ledgerBalance) {
+          final Ledger individualLedger = Ledger(
+            lb.id,
+            LedgerType.individual,
+            members: tw.members,
+            name: lb.name,
+            amount: lb.balance,
+            createdAt: tw.transaction.createdAt,
+            updatedAt: tw.transaction.updatedAt,
+          );
+          final ledgerKey =
+              '${individualLedger.id}_${individualLedger.type.value()}';
+          uniqueLedgersMap[ledgerKey] = individualLedger;
+        }
+      }
+
+      final List<Map<String, dynamic>> ledgerWiseTxns =
+          tw.generateLedgerWiseTransactions();
+      transactionRows.addAll(ledgerWiseTxns);
+
+      for (var splitDetail in tw.transaction.splitDetails) {
+        final splitRow = <String, dynamic>{
+          'transaction_id': tw.transaction.id,
+          'user_id': splitDetail.id,
+          'amount': splitDetail.amount,
+        };
+        splitDetailsRows.add(splitRow);
+      }
+    }
+    await _db.transaction((txn) async {
+      for (var user in uniqueUsersMap.values) {
+        await txn.insert(
+          'user',
+          {
+            'id': user.id,
+            'name': user.name,
+            'email': user.email,
+            'image_url': user.imageUrl,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+      for (var ledger in uniqueLedgersMap.values) {
+        await txn.insert(
+          'ledger',
+          ledger.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+      for (var txnMap in transactionRows) {
+        await txn.insert(
+          'transactions',
+          txnMap,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+
+        final ledgerId = txnMap['ledger_id'] as String;
+        final ledgerType = txnMap['ledger_type'] as String;
+        final updatedAt = txnMap['updated_at'] as String;
+        await txn.update(
+          'ledger',
+          {'updated_at': updatedAt},
+          where: 'id = ? AND type = ?',
+          whereArgs: [ledgerId, ledgerType],
+        );
+      }
+
+      for (var splitMap in splitDetailsRows) {
+        await txn.insert(
+          'split_details',
+          splitMap,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
   }
 }

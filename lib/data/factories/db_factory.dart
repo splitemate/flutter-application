@@ -2,7 +2,15 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class LocalDatabaseFactory {
-  Future<Database> createDatabase() async {
+  static Database? _database;
+
+  Future<Database> getDatabase() async {
+    if (_database != null) return _database!;
+    _database = await _createDatabase();
+    return _database!;
+  }
+
+  Future<Database> _createDatabase() async {
     String databasesPath = await getDatabasesPath();
     String dbPath = join(databasesPath, 'splitemate.db');
 

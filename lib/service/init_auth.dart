@@ -13,7 +13,7 @@ class InitAuthService {
   InitAuthService() {
     _dio ??= Dio(
       BaseOptions(
-        baseUrl: '$baseUrl/user',
+        baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
       ),
@@ -56,7 +56,7 @@ class InitAuthService {
         return null;
       }
       final response = await _dio?.post(
-        '/token/refresh',
+        '/user/token/refresh',
         data: {'refresh': refreshToken},
       );
       if (response?.statusCode == 200 && response?.data != null) {
@@ -116,7 +116,7 @@ class InitAuthService {
 
     try {
       final response = await _dio?.get(
-        '/profile',
+        '/user/profile',
         options: Options(
           headers: <String, dynamic>{
             'Authorization': 'Bearer $givenAccessToken',
@@ -167,5 +167,109 @@ class InitAuthService {
   CurrentUser getCurrentUser(Map<String, dynamic> userDetailsMap) {
     CurrentUser user = CurrentUser.fromMap(userDetailsMap);
     return user;
+  }
+
+  Future<Map<String, dynamic>?> fetchActivities(int sinceId) async {
+    final String url = "$baseUrl/activity/sync?since_id=$sinceId&limit=50";
+
+    String? token = await getValidTokenOnLogin();
+    if (token == null || token.isEmpty) {
+      return null;
+    }
+
+    try {
+      final response = await _dio?.get(
+        url,
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      if (response?.statusCode == 200) {
+        return response?.data;
+      } else if (response?.statusCode == 401) {
+        print("Received 401, attempting token refresh...");
+        String? newToken = await refreshAccessToken();
+        if (newToken != null && newToken.isNotEmpty) {
+          final retryResponse = await _dio?.get(
+            url,
+            options: Options(
+              headers: {
+                "Authorization": "Bearer $newToken",
+                "Content-Type": "application/json",
+              },
+            ),
+          );
+          if (retryResponse?.statusCode == 200) {
+            return retryResponse?.data;
+          } else {
+            print("Retry failed with status: ${retryResponse?.statusCode}");
+            return null;
+          }
+        } else {
+          return null;
+        }
+      } else {
+        print("Error fetching activities: ${response?.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Exception in _fetchActivities: $e");
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchTransactions(
+      Set<int> transactionIds, int limit, int page) async {
+    final String url = "$baseUrl/transaction/get-bulk?limit=$limit&page=$page";
+
+    String? token = await getValidTokenOnLogin();
+    if (token == null || token.isEmpty) {
+      return null;
+    }
+
+    try {
+      final response = await _dio?.post(url,
+          options: Options(
+            headers: {
+              "Authorization": "Bearer $token",
+              "Content-Type": "application/json",
+            },
+          ),
+          data: {'transaction_ids': transactionIds.toList()});
+      if (response?.statusCode == 200) {
+        return response?.data;
+      } else if (response?.statusCode == 401) {
+        print("Received 401, attempting token refresh...");
+        String? newToken = await refreshAccessToken();
+        if (newToken != null && newToken.isNotEmpty) {
+          final retryResponse = await _dio?.post(url,
+              options: Options(
+                headers: {
+                  "Authorization": "Bearer $newToken",
+                  "Content-Type": "application/json",
+                },
+              ),
+              data: {'transaction_ids': transactionIds.toList()});
+          if (retryResponse?.statusCode == 200) {
+            return retryResponse?.data;
+          } else {
+            print("Retry failed with status: ${retryResponse?.statusCode}");
+            return null;
+          }
+        } else {
+          return null;
+        }
+      } else {
+        print("Error fetching activities: ${response?.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Exception in _fetchActivities: $e");
+      return null;
+    }
   }
 }

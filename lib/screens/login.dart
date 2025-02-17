@@ -3,8 +3,13 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:splitemate/colors.dart';
+import 'package:splitemate/data/datasource/datasource_contract.dart';
+import 'package:splitemate/data/datasource/sqflite_datasource.dart';
+import 'package:splitemate/data/factories/db_factory.dart';
 import 'package:splitemate/exceptions/exceptions.dart';
 import 'package:splitemate/routes.dart';
+import 'package:splitemate/service/init_auth.dart';
+import 'package:splitemate/service/sync_service.dart';
 import 'package:splitemate/states_management/bloc/auth_status.dart';
 import 'package:splitemate/widgets/popup/simple_alert_box.dart';
 import 'package:splitemate/widgets/auth_input/password_input_gradiant.dart';
@@ -17,6 +22,7 @@ import 'package:splitemate/widgets/auth_input/email_gradiant_input.dart';
 import 'package:splitemate/states_management/bloc/signin/signin_bloc.dart';
 import 'package:splitemate/states_management/bloc/external_auth/external_auth_bloc.dart';
 import 'package:splitemate/widgets/popup/display_unknown_error.dart';
+import 'package:sqflite/sqflite.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -215,6 +221,10 @@ class _LoginState extends State<Login> {
   }
 
   void _goToHome(BuildContext context, accessToken, userProvider) async {
+    final Database db = await LocalDatabaseFactory().getDatabase();
+    final IDatasource datasource = SqfliteDatasource(db);
+    final SyncService syncService = SyncService(authService: InitAuthService(), datasource: datasource);
+    await syncService.syncData();
     Navigator.pushNamedAndRemoveUntil(
         context, dashboardPageRoute, (route) => false,
         arguments: {'me': userProvider.user, 'access_token': accessToken});

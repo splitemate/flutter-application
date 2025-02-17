@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'package:splitemate/service/sync_service.dart';
 import 'package:splitemate/states_management/bloc/activity/activity_bloc.dart';
 import 'package:splitemate/states_management/home/activity_cubit.dart';
 import 'package:splitemate/theme.dart';
@@ -20,20 +21,15 @@ import 'package:splitemate/data/factories/db_factory.dart';
 import 'package:splitemate/data/datasource/datasource_contract.dart';
 import 'package:splitemate/data/datasource/sqflite_datasource.dart';
 import 'package:splitemate/models/current_user.dart';
-import 'package:splitemate/models/ledger.dart';
-import 'package:splitemate/models/user.dart';
 import 'package:splitemate/repository/repository_store.dart';
 import 'package:splitemate/service/init_auth.dart';
 import 'package:splitemate/service/ws/ws_service.dart';
 import 'package:splitemate/service/message_stream_service.dart';
 import 'package:splitemate/screens/home/home_router.dart';
 import 'package:splitemate/screens/on_boarding.dart';
-import 'package:splitemate/screens/transaction_thread/transaction_thread.dart';
 import 'package:splitemate/states_management/bloc/transaction/transaction_bloc.dart';
 import 'package:splitemate/states_management/home/ledgers_cubit.dart';
-import 'package:splitemate/states_management/home/transaction_thread_cubit.dart';
 import 'package:splitemate/viewmodels/ledgers_view_model.dart';
-import 'package:splitemate/viewmodels/ledger_view_model.dart';
 
 class CompositionRoot extends StatefulWidget {
   const CompositionRoot({super.key});
@@ -55,6 +51,7 @@ class _CompositionRootState extends State<CompositionRoot> {
   CurrentUser selfUser = CurrentUser.empty();
   late MessageStreamService messageStreamService;
   Map<String, dynamic> userDetailsMap = {};
+  late SyncService syncService;
 
   @override
   void initState() {
@@ -66,7 +63,7 @@ class _CompositionRootState extends State<CompositionRoot> {
     _authService = InitAuthService();
     _accessToken = (await _authService.getValidTokenOnLogin()) ?? '';
 
-    db = await LocalDatabaseFactory().createDatabase();
+    db = await LocalDatabaseFactory().getDatabase();
     datasource = SqfliteDatasource(db);
     viewModel = LedgersViewModel(datasource);
     activitiesViewModel = ActivitiesViewModel(datasource);
@@ -75,6 +72,8 @@ class _CompositionRootState extends State<CompositionRoot> {
     messageStreamService = MessageStreamService(ws);
     ledgersCubit = LedgersCubit(viewModel);
     activitiesCubit = ActivitiesCubit(activitiesViewModel);
+    syncService = SyncService(authService: _authService, datasource: datasource);
+    await syncService.syncData();
 
     if (_accessToken.isNotEmpty) {
       try {
