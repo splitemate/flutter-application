@@ -17,6 +17,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     on<TransactionSubscribed>(_onSubscribed);
     on<_TransactionReceived>(_onReceived);
     on<TransactionSent>(_onSent);
+    on<TransactionUnsubscribed>(_onUnsubscribed);
   }
 
   Future<void> _onSubscribed(
@@ -51,6 +52,12 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
       print('Error sending transaction: $error');
       emit(TransactionError(error.toString()));
     }
+  }
+
+  Future<void> _onUnsubscribed(
+      TransactionUnsubscribed event, Emitter<TransactionState> emit) async {
+    _subscription?.cancel();
+    emit(TransactionInitial());
   }
 
   @override

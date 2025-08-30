@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:splitemate/colors.dart';
 import 'package:splitemate/widgets/common/custom_gradiant_button.dart';
+import 'package:splitemate/widgets/common/simple_button.dart';
 
 void simpleAlertBox(
     BuildContext context,
@@ -11,6 +12,10 @@ void simpleAlertBox(
       String? svgIconPath,
       String buttonText = '',
       void Function()? onTap,
+      String? secondButtonText,
+      void Function()? onSecondButtonTap,
+      List<Color>? secondButtonColors,
+      Color? secondButtonTextColor,
     }) {
   showDialog(
     context: context,
@@ -54,11 +59,36 @@ void simpleAlertBox(
           ],
         ),
         actions: <Widget>[
-          CustomGradientButton(
-            text: buttonText,
-            onPressed: onTap ?? () => Navigator.of(context).pop(),
-            gradColors: kGradColors,
-          ),
+          if (secondButtonText != null)
+            Row(
+              children: [
+                Expanded(
+                  child: CustomGradientButton(
+                    text: buttonText,
+                    onPressed: onTap ?? () => Navigator.of(context).pop(),
+                    gradColors: kGradColors,
+                    textColor: kBlackColor,
+                    isOutlined: true,
+                    borderWidth: 1.0,
+                  ),
+                ),
+                SizedBox(width: size.width * 0.03),
+                Expanded(
+                  child: CustomGradientButton(
+                    text: secondButtonText,
+                    onPressed: onSecondButtonTap ?? () => Navigator.of(context).pop(),
+                    gradColors: secondButtonColors ?? [kRedColor, kRedColor],
+                    textColor: secondButtonTextColor ?? kWhiteColor,
+                  ),
+                ),
+              ],
+            )
+          else
+            CustomGradientButton(
+              text: buttonText,
+              onPressed: onTap ?? () => Navigator.of(context).pop(),
+              gradColors: kGradColors,
+            ),
         ],
       );
     },

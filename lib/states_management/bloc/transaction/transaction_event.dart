@@ -28,3 +28,10 @@ class _TransactionReceived extends TransactionEvent {
   @override
   List<Object> get props => [transactionWrapper];
 }
+
+class TransactionUnsubscribed extends TransactionEvent {
+  const TransactionUnsubscribed();
+
+  @override
+  List<Object> get props => [];
+}

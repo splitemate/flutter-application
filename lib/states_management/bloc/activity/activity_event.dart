@@ -19,3 +19,10 @@ class _ActivityReceived extends ActivityEvent {
   @override
   List<Object> get props => [activity];
 }
+
+class ActivityUnsubscribed extends ActivityEvent {
+  const ActivityUnsubscribed();
+
+  @override
+  List<Object> get props => [];
+}

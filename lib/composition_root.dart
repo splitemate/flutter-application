@@ -30,6 +30,7 @@ import 'package:splitemate/screens/on_boarding.dart';
 import 'package:splitemate/states_management/bloc/transaction/transaction_bloc.dart';
 import 'package:splitemate/states_management/home/ledgers_cubit.dart';
 import 'package:splitemate/viewmodels/ledgers_view_model.dart';
+import 'package:splitemate/service/logout_service.dart';
 
 class CompositionRoot extends StatefulWidget {
   const CompositionRoot({super.key});
@@ -151,6 +152,7 @@ class _CompositionRootState extends State<CompositionRoot> {
         debugShowCheckedModeBanner: false,
         theme: lightTheme(context),
         darkTheme: darkTheme(context),
+        navigatorKey: LogoutService.navigatorKey, // Add global navigator key
         onGenerateRoute: RouterNavigator.generateRoute,
         home: _accessToken.isNotEmpty
             ? Dashboard(

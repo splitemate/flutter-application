@@ -19,3 +19,10 @@ class ToggleButtonPressed extends BnbEvent {
   @override
   List<Object?> get props => [toggleIndex];
 }
+
+class BnbReset extends BnbEvent {
+  BnbReset();
+
+  @override
+  List<Object?> get props => [];
+}

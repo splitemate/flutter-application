@@ -29,7 +29,7 @@ ThemeData lightTheme(BuildContext context) => ThemeData.light().copyWith(
       primaryColor: kWhiteColor,
       scaffoldBackgroundColor: kStockColor,
       appBarTheme: appBarTheme,
-      tabBarTheme: tabBarTheme,
+      // tabBarTheme: tabBarTheme,
       // dividerTheme: dividerTheme.copyWith(color: kIconLight),
       // iconTheme: IconThemeData(color: kIconLight),
       // textTheme: GoogleFonts.comfortaaTextTheme(Theme.of(context).textTheme)
@@ -40,7 +40,7 @@ ThemeData lightTheme(BuildContext context) => ThemeData.light().copyWith(
 ThemeData darkTheme(BuildContext context) => ThemeData.light().copyWith(
     primaryColor: kWhiteColor,
     scaffoldBackgroundColor: kStockColor,
-    tabBarTheme: tabBarTheme.copyWith(unselectedLabelColor: kBlackColor),
+    // tabBarTheme: tabBarTheme.copyWith(unselectedLabelColor: kBlackColor),
     appBarTheme: appBarTheme.copyWith(backgroundColor: kStockColor),
     dividerTheme: dividerTheme.copyWith(color: kStockColor),
     iconTheme: const IconThemeData(color: kBlackColor),

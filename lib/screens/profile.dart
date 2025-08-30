@@ -6,9 +6,75 @@ import 'package:splitemate/providers/user_provider.dart';
 import 'package:splitemate/widgets/common/custom_gradiant_button.dart';
 import 'package:splitemate/widgets/common/simple_button.dart';
 import 'package:splitemate/widgets/common/list.dart';
+import 'package:splitemate/service/logout_service.dart';
+import 'package:splitemate/widgets/popup/simple_alert_box.dart';
 
 class Profile extends StatelessWidget {
   const Profile({super.key});
+
+  void _showLogoutConfirmation(BuildContext context) {
+    simpleAlertBox(
+      context,
+      'Confirm Logout',
+      'Are you sure you want to logout?',
+      size: MediaQuery.of(context).size,
+      buttonText: 'Cancel',
+      onTap: () => Navigator.of(context).pop(),
+      secondButtonText: 'Logout',
+      onSecondButtonTap: () {
+        Navigator.of(context).pop();
+        _performLogout(context);
+      },
+      secondButtonColors: [kRedColor, kRedColor],
+      secondButtonTextColor: kWhiteColor,
+    );
+  }
+
+  Future<void> _performLogout(BuildContext context) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const AlertDialog(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 20),
+                Text('Logging out...'),
+              ],
+            ),
+          );
+        },
+      );
+
+      // Perform comprehensive logout
+      await LogoutService().performLogout(context);
+
+      // Close loading dialog - navigation will be handled by LogoutService
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+      }
+    } catch (e) {
+      print('Logout error: $e');
+      
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        
+        // Show error message
+        simpleAlertBox(
+          context,
+          'Logout Error',
+          'An error occurred during logout. Please try again.',
+          size: MediaQuery.of(context).size,
+          buttonText: 'OK',
+          onTap: () => Navigator.of(context).pop(),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,12 +229,7 @@ class Profile extends StatelessWidget {
                           child: Center(
                             child: SimpleButton(
                               buttonText: "Logout",
-                              onPressed: () {
-                                Navigator.pushNamedAndRemoveUntil(
-                                    context,
-                                    onBoardingPageRoute,
-                                    (Route<dynamic> route) => false);
-                              },
+                              onPressed: () => _showLogoutConfirmation(context),
                               iconPath: 'assets/images/logout.svg',
                               buttonHeight: size.height * 0.07,
                               backGroundColor: kRedColor,

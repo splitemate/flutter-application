@@ -17,6 +17,7 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   ActivityBloc(this.messageStreamService) : super(ActivityInitial()) {
     on<ActivitySubscribed>(_onSubscribed);
     on<_ActivityReceived>(_onReceived);
+    on<ActivityUnsubscribed>(_onUnsubscribed);
   }
 
   Future<void> _onSubscribed(
@@ -39,6 +40,12 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
 
   void _onReceived(_ActivityReceived event, Emitter<ActivityState> emit) {
     emit(ActivityReceivedSuccess(event.activity));
+  }
+
+  Future<void> _onUnsubscribed(
+      ActivityUnsubscribed event, Emitter<ActivityState> emit) async {
+    _subscription?.cancel();
+    emit(ActivityInitial());
   }
 
   @override

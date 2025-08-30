@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
+import 'package:splitemate/utils/firebase_config.dart';
 import 'package:splitemate/utils/const.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:splitemate/exceptions/exceptions.dart';
@@ -13,8 +14,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthService {
   static Dio? _dio;
   BuildContext context;
+  final _googleSignIn = GoogleSignIn.instance;
+  bool _isGoogleSignInInitialized = false;
 
   AuthService(this.context) {
+    _initializeGoogleSignIn();
     _dio ??= Dio(
       BaseOptions(
         baseUrl: baseUrl,
@@ -58,17 +62,27 @@ class AuthService {
     ));
   }
 
-  static final _googleSignIn = GoogleSignIn();
+  Future<void> _initializeGoogleSignIn() async {
+    try {
+      await _googleSignIn.initialize(serverClientId: FirebaseConfig.webClientId);
+      _isGoogleSignInInitialized = true;
+    } catch (e) {
+      print('Failed to initialize Google Sign-In: $e');
+    }
+  }
 
-  static Future<GoogleSignInAccount?> loginWithGoogle() =>
-      _googleSignIn.signIn();
+  Future<void> _ensureGoogleSignInInitialized() async {
+    if (!_isGoogleSignInInitialized) {
+      await _initializeGoogleSignIn();
+    }
+  }
 
   Future<Map<String, dynamic>?> externalLogin() async {
     try {
-      final user = await loginWithGoogle();
-      if (user == null) {
-        throw UserNotFound();
-      }
+      await _ensureGoogleSignInInitialized();
+      final GoogleSignInAccount user = await _googleSignIn.authenticate(
+        scopeHint: ['email', 'displayName', 'photoUrl'],
+      );
       String email = user.email;
       String name = user.displayName ?? '';
       String imageUrl = user.photoUrl ?? '';

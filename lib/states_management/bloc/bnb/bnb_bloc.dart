@@ -12,6 +12,8 @@ class BnbBloc extends Bloc<BnbEvent, BnbState> {
         emit(state.copyWith(tabIndex: event.tabIndex));
       } else if (event is ToggleButtonPressed) {
         emit(state.copyWith(toggleIndex: event.toggleIndex));
+      } else if (event is BnbReset) {
+        emit(const BnbState(tabIndex: 0, toggleIndex: 0));
       }
     });
   }
