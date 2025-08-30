@@ -1,5 +1,5 @@
-package com.example.splitemate
+package com.splitemate.app
 
 import io.flutter.embedding.android.FlutterActivity
 
-class MainActivity: FlutterActivity()
+class MainActivity : FlutterActivity()

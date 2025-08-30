@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "84702649653",
+    "project_id": "splitemate-app",
+    "storage_bucket": "splitemate-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:84702649653:android:93e8e6ff93d224d09d407c",
+        "android_client_info": {
+          "package_name": "com.splitemate.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "84702649653-soo9q31vi2vuqliue1hd5iq8ngb27u3j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.splitemate.app",
+            "certificate_hash": "0cb84a524d2ca190be5414fe65010c2f961d9b7d"
+          }
+        },
+        {
+          "client_id": "84702649653-6agk4ck0iest2pd23r3janelu0lffaj4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCc09FhWJhvrR6rh-TYMMLmQ70poy5Fhtk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "84702649653-6agk4ck0iest2pd23r3janelu0lffaj4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
