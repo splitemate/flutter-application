@@ -37,6 +37,7 @@ class ExternalAuthBloc extends Bloc<ExternalAuthEvent, ExternalAuthState> {
             netBalance: user['balance']['net_balance'],
             accessToken: user['tokens']['access'],
             refreshToken: user['tokens']['access'],
+            inviteToken: user['invite_token'] ?? '',
           ));
           emit(state.copyWith(appStatus: OAuthRequestSuccess()));
         } else {

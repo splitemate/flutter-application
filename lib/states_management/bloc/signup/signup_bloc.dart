@@ -43,7 +43,8 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpStates> {
               totalOwed: user['balance']['total_owed'],
               netBalance: user['balance']['net_balance'],
               accessToken: '',
-              refreshToken: ''));
+              refreshToken: '',
+              inviteToken: user['invite_token'] ?? ''));
           emit(state.copyWith(appStatus: const SubmissionSuccess()));
         } else {
           emit(state.copyWith(

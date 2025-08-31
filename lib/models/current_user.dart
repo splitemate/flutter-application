@@ -8,6 +8,7 @@ class CurrentUser {
   final double totalOwed;
   final double totalDue;
   final double netBalance;
+  final String inviteToken;
 
   CurrentUser(
       {required this.id,
@@ -18,7 +19,8 @@ class CurrentUser {
       required this.refreshToken,
       required this.totalOwed,
       required this.totalDue,
-      required this.netBalance});
+      required this.netBalance,
+      required this.inviteToken});
 
   factory CurrentUser.fromMap(Map<String, dynamic> map) {
     return CurrentUser(
@@ -31,6 +33,7 @@ class CurrentUser {
       totalOwed: (map['balance']['total_owed'] ?? 0).toDouble(),
       totalDue: (map['balance']['total_due'] ?? 0).toDouble(),
       netBalance: (map['balance']['net_balance'] ?? 0).toDouble(),
+      inviteToken: map['invite_token'] ?? '',
     );
   }
 
@@ -44,6 +47,7 @@ class CurrentUser {
         refreshToken: '',
         totalOwed: 0,
         totalDue: 0,
-        netBalance: 0);
+        netBalance: 0,
+        inviteToken: '');
   }
 }

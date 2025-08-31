@@ -10,7 +10,7 @@ class LogoutUtils {
     try {
       // Perform comprehensive logout
       await LogoutService().performLogout(context);
-      
+
       // Navigate to onboarding page and clear all routes
       if (context.mounted) {
         Navigator.pushNamedAndRemoveUntil(
@@ -20,8 +20,6 @@ class LogoutUtils {
         );
       }
     } catch (e) {
-      print('Error during quick logout: $e');
-      // Even if there's an error, try to navigate to onboarding
       if (context.mounted) {
         Navigator.pushNamedAndRemoveUntil(
           context,
@@ -37,7 +35,7 @@ class LogoutUtils {
     simpleAlertBox(
       context,
       'Confirm Logout',
-      'Are you sure you want to logout? This will clear all your data and sign you out.',
+      'Are you sure you want to logout?',
       size: MediaQuery.of(context).size,
       buttonText: 'Cancel',
       onTap: () => Navigator.of(context).pop(),
@@ -50,4 +48,4 @@ class LogoutUtils {
       secondButtonTextColor: kWhiteColor,
     );
   }
-} 
+}

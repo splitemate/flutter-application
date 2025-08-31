@@ -6,7 +6,6 @@ import 'package:splitemate/states_management/bloc/auth_status.dart';
 import 'package:splitemate/models/current_user.dart';
 import 'package:splitemate/providers/user_provider.dart';
 
-
 part 'signin_event.dart';
 
 part 'signin_state.dart';
@@ -43,7 +42,8 @@ class SignInBloc extends Bloc<SignInEvent, SignInStates> {
               totalOwed: user['balance']['total_owed'],
               netBalance: user['balance']['net_balance'],
               accessToken: user['tokens']['access'],
-              refreshToken: user['tokens']['refresh']));
+              refreshToken: user['tokens']['refresh'],
+              inviteToken: user['invite_token'] ?? ''));
           emit(state.copyWith(appStatus: const SubmissionSuccess()));
         } else {
           emit(
@@ -63,7 +63,8 @@ class SignInBloc extends Bloc<SignInEvent, SignInStates> {
               totalOwed: 0,
               netBalance: 0,
               accessToken: '',
-              refreshToken: ''));
+              refreshToken: '',
+              inviteToken: ''));
         }
         emit(state.copyWith(appStatus: SubmissionFailed(e)));
       }

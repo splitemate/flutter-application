@@ -78,7 +78,8 @@ class InitAuthService {
       String? userEmail,
       String? userId,
       String? imageUrl,
-      String? balance}) async {
+      String? balance,
+      String? inviteToken}) async {
     final prefs = await SharedPreferences.getInstance();
     final Map<String, dynamic> dataToSave = {
       'access_token': accessToken,
@@ -88,6 +89,7 @@ class InitAuthService {
       'user_id': userId,
       'balance': balance,
       'image_url': imageUrl,
+      'invite_token': inviteToken,
     };
 
     final batch = <Future<void>>[];
@@ -112,6 +114,7 @@ class InitAuthService {
     late String? accessToken;
     late String? refreshToken;
     late Map<String, dynamic>? balance;
+    String? inviteToken = '';
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     try {
@@ -130,12 +133,14 @@ class InitAuthService {
         userId = response?.data['id'];
         balance = response?.data['balance'];
         imageUrl = response?.data['image_url'];
+        inviteToken = response?.data['invite_token'];
         await saveUserData(
             userId: userId,
             userName: userName,
             userEmail: userEmail,
             balance: jsonEncode(balance),
-            imageUrl: imageUrl);
+            imageUrl: imageUrl,
+            inviteToken: inviteToken);
       } else {
         String bal = prefs.getString('balance') ?? '';
         userId = prefs.getString('user_id');
@@ -143,6 +148,7 @@ class InitAuthService {
         userEmail = prefs.getString('user_email');
         balance = jsonDecode(bal);
         imageUrl = prefs.getString('image_url');
+        inviteToken = prefs.getString('invite_token');
       }
     } on DioException catch (e) {
       throw ApiConnectionTimeout();
@@ -160,7 +166,8 @@ class InitAuthService {
       'image_url': imageUrl,
       'access_token': accessToken,
       'refresh_token': refreshToken,
-      'balance': balance
+      'balance': balance,
+      'invite_token': inviteToken
     };
   }
 

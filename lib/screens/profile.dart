@@ -8,6 +8,8 @@ import 'package:splitemate/widgets/common/simple_button.dart';
 import 'package:splitemate/widgets/common/list.dart';
 import 'package:splitemate/service/logout_service.dart';
 import 'package:splitemate/widgets/popup/simple_alert_box.dart';
+import 'package:splitemate/screens/qr_scanner_screen.dart';
+import 'package:splitemate/screens/qr_code_screen.dart';
 
 class Profile extends StatelessWidget {
   const Profile({super.key});
@@ -58,11 +60,11 @@ class Profile extends StatelessWidget {
       }
     } catch (e) {
       print('Logout error: $e');
-      
+
       // Close loading dialog
       if (context.mounted) {
         Navigator.of(context).pop();
-        
+
         // Show error message
         simpleAlertBox(
           context,
@@ -155,7 +157,13 @@ class Profile extends StatelessWidget {
                       Expanded(
                         child: SimpleButton(
                           buttonText: "Scan Code",
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const QRScannerScreen(),
+                              ),
+                            );
+                          },
                           iconPath: 'assets/images/scan.svg',
                           buttonHeight: size.height * 0.06,
                           backGroundColor: kBlackColor,
@@ -170,7 +178,13 @@ class Profile extends StatelessWidget {
                             prefixIconPath: 'assets/images/qr.svg',
                             buttonHeight: size.height * 0.06,
                             textColor: kBlackColor,
-                            onPressed: () {}),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const QRCodeScreen(),
+                                ),
+                              );
+                            }),
                       ),
                     ],
                   ),

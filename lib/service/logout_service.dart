@@ -19,33 +19,36 @@ import 'package:splitemate/routes.dart';
 
 class LogoutService {
   static final LogoutService _instance = LogoutService._internal();
+
   factory LogoutService() => _instance;
+
   LogoutService._internal();
-  
+
   // Global navigation key for logout navigation
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   Future<void> performLogout(BuildContext context) async {
     try {
       print('Starting comprehensive logout...');
-      
+
       // Clear states first to prevent queries to dropped tables
       _clearAllStates(context);
-      
+
       // Clear data
       await _clearSharedPreferences();
       await _clearDatabase();
-      
+
       // Clear providers and BLoCs
       _clearUserProvider(context);
       _resetAllBlocs(context);
-      
+
       // Disconnect services
       await _disconnectWebSockets();
       await _signOutGoogle();
-      
+
       print('Logout completed successfully');
-      
+
       // Try to navigate using global navigator key
       try {
         navigatorKey.currentState?.pushNamedAndRemoveUntil(
@@ -92,27 +95,24 @@ class LogoutService {
   Future<void> _clearDatabase() async {
     try {
       final Database db = await LocalDatabaseFactory().getDatabase();
-      
+
       // List of tables to clear (instead of dropping all)
       final List<String> tablesToClear = [
         'transactions',
-        'ledgers', 
+        'ledgers',
         'activities',
         'users',
         'receipts'
       ];
-      
+
       for (String tableName in tablesToClear) {
         try {
           await db.execute('DELETE FROM $tableName');
           print('Cleared table: $tableName');
         } catch (e) {
           // Table might not exist, which is fine
-          print('Table $tableName not found or already empty: $e');
         }
       }
-      
-      print('Database cleared successfully');
     } catch (e) {
       print('Error clearing database: $e');
     }
@@ -122,16 +122,16 @@ class LogoutService {
     try {
       final ledgersCubit = context.read<LedgersCubit>();
       ledgersCubit.emit([]);
-      
+
       final activitiesCubit = context.read<ActivitiesCubit>();
       activitiesCubit.emit([]);
-      
+
       final transactionBloc = context.read<TransactionBloc>();
       transactionBloc.add(const TransactionUnsubscribed());
-      
+
       final activityBloc = context.read<ActivityBloc>();
       activityBloc.add(const ActivityUnsubscribed());
-      
+
       final bnbBloc = context.read<BnbBloc>();
       bnbBloc.add(BnbReset());
     } catch (e) {
@@ -144,7 +144,6 @@ class LogoutService {
       final wsService = WebSocketService.getInstance();
       if (wsService.isConnected) {
         await wsService.disconnect();
-        print('WebSocket disconnected');
       }
     } catch (e) {
       print('Error disconnecting WebSocket: $e');
@@ -164,7 +163,6 @@ class LogoutService {
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       userProvider.clearUser();
-      print('User provider cleared');
     } catch (e) {
       print('Error clearing user provider: $e');
     }
@@ -174,11 +172,11 @@ class LogoutService {
     try {
       final transactionBloc = context.read<TransactionBloc>();
       transactionBloc.emit(TransactionInitial());
-      
+
       final activityBloc = context.read<ActivityBloc>();
       activityBloc.emit(ActivityInitial());
-          } catch (e) {
+    } catch (e) {
       print('Error resetting BLoCs: $e');
     }
   }
-} 
+}

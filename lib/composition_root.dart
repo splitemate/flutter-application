@@ -73,7 +73,8 @@ class _CompositionRootState extends State<CompositionRoot> {
     messageStreamService = MessageStreamService(ws);
     ledgersCubit = LedgersCubit(viewModel);
     activitiesCubit = ActivitiesCubit(activitiesViewModel);
-    syncService = SyncService(authService: _authService, datasource: datasource);
+    syncService =
+        SyncService(authService: _authService, datasource: datasource);
     await syncService.syncData();
 
     if (_accessToken.isNotEmpty) {
@@ -152,7 +153,8 @@ class _CompositionRootState extends State<CompositionRoot> {
         debugShowCheckedModeBanner: false,
         theme: lightTheme(context),
         darkTheme: darkTheme(context),
-        navigatorKey: LogoutService.navigatorKey, // Add global navigator key
+        navigatorKey: LogoutService.navigatorKey,
+        // Add global navigator key
         onGenerateRoute: RouterNavigator.generateRoute,
         home: _accessToken.isNotEmpty
             ? Dashboard(

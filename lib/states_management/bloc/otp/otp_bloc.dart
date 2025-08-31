@@ -73,7 +73,8 @@ class OtpBloc extends Bloc<OtpEvent, OtpStates> {
                 totalOwed: response['balance']['total_owed'],
                 netBalance: response['balance']['net_balance'],
                 accessToken: response['tokens']['access'],
-                refreshToken: response['tokens']['refresh']));
+                refreshToken: response['tokens']['refresh'],
+                inviteToken: response['invite_token'] ?? ''));
             emit(state.copyWith(appStatus: const SubmissionSuccess()));
           }
         } else {

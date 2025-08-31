@@ -33,7 +33,6 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   void initState() {
-    print('Dashboard initState');
     super.initState();
     context.read<ActivitiesCubit>().activities();
     _webSocketService = WebSocketService.getInstance();
@@ -71,7 +70,6 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   void dispose() {
-    print('Dashboard dispose');
     super.dispose();
   }
 

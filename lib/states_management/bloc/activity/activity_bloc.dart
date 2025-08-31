@@ -50,7 +50,6 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
 
   @override
   Future<void> close() {
-    print('Closing');
     _subscription?.cancel();
     return super.close();
   }

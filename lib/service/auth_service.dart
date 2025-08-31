@@ -64,7 +64,8 @@ class AuthService {
 
   Future<void> _initializeGoogleSignIn() async {
     try {
-      await _googleSignIn.initialize(serverClientId: FirebaseConfig.webClientId);
+      await _googleSignIn.initialize(
+          serverClientId: FirebaseConfig.webClientId);
       _isGoogleSignInInitialized = true;
     } catch (e) {
       print('Failed to initialize Google Sign-In: $e');
@@ -114,7 +115,8 @@ class AuthService {
             userName: userName,
             userId: userId,
             imageUrl: imageUrl,
-            balance: jsonEncode(balance));
+            balance: jsonEncode(balance),
+            inviteToken: userData['invite_token']);
         return {
           'id': userId,
           'email': userEmail,
@@ -183,7 +185,8 @@ class AuthService {
             userName: userName,
             userId: userId,
             imageUrl: imageUrl,
-            balance: jsonEncode(balance));
+            balance: jsonEncode(balance),
+            inviteToken: userData['invite_token']);
         return {
           'id': userId,
           'email': userEmail,
@@ -247,7 +250,8 @@ class AuthService {
             userName: userName,
             userId: userId,
             imageUrl: imageUrl,
-            balance: jsonEncode(balance));
+            balance: jsonEncode(balance),
+            inviteToken: userData['invite_token']);
         return {
           'id': userId,
           'email': userEmail,
@@ -343,7 +347,8 @@ class AuthService {
               imageUrl: imageUrl,
               accessToken: accessToken,
               refreshToken: refreshToken,
-              balance: jsonEncode(balance));
+              balance: jsonEncode(balance),
+              inviteToken: data['invite_token']);
           return {
             'id': data['id'],
             'name': data['name'],
@@ -452,7 +457,8 @@ class AuthService {
       String? userEmail,
       String? userId,
       String? imageUrl,
-      String? balance}) async {
+      String? balance,
+      String? inviteToken}) async {
     final prefs = await SharedPreferences.getInstance();
     final Map<String, dynamic> dataToSave = {
       'access_token': accessToken,
@@ -462,6 +468,7 @@ class AuthService {
       'user_id': userId,
       'balance': balance,
       'image_url': imageUrl,
+      'invite_token': inviteToken,
     };
 
     final batch = <Future<void>>[];
