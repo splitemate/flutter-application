@@ -8,6 +8,10 @@ class LocalTransaction {
 
   String? get id => _id;
   String? _id;
+  
+  // ✅ Add setter for _id
+  set id(String? value) => _id = value;
+  
   Transaction transaction;
   ReceiptStatus receipt;
 
@@ -32,40 +36,50 @@ class LocalTransaction {
       };
 
   factory LocalTransaction.fromMap(Map<String, dynamic> json) {
-    final List<dynamic> parsedJson = json['split_details'];
-    final transaction = Transaction(
-        payerId: json['payer_id'],
-        totalAmount: json['total_amount'] is String
-            ? double.parse(json['total_amount'])
-            : json['total_amount'] as double,
-        splitCount: json['split_count'] is String
-            ? int.parse(json['split_count'])
-            : json['split_count'] as int,
-        description: json['description'],
-        transactionType:
-            TransactionTypeParsing.fromString(json['transaction_type']),
-        transactionDate: DateTime.parse(json['transaction_date']),
-        createdAt: DateTime.parse(json['created_at']),
-        createdBy: json['created_by'],
-        updatedAt: DateTime.parse(json['updated_at']),
-        ledgerType: ledger.EnumParsing.fromString(json['ledger_type']),
-        splitDetails: parsedJson
-            .map((item) => SplitDetail(
-                  id: item['user_id'],
-                  name: item['user_name'],
-                  email: item['user_email'],
-                  imageUrl: item['user_image'],
-                  amount: (item['split_amount'] as num).toDouble(),
-                ))
-            .toList(),
-        groupId: json['group_id']);
+    try {
+      final List<dynamic>? splitDetailsJson = json['split_details'];
+      final List<SplitDetail> splitDetails = splitDetailsJson != null
+          ? splitDetailsJson
+              .map((item) => SplitDetail(
+                    id: item['user_id'] ?? '',
+                    name: item['user_name'] ?? '',
+                    email: item['user_email'] ?? '',
+                    imageUrl: item['user_image'] ?? '',
+                    amount: (item['split_amount'] as num?)?.toDouble() ?? 0.0,
+                  ))
+              .toList()
+          : [];
+          
+      final transaction = Transaction(
+          payerId: json['payer_id'] ?? '',
+          totalAmount: json['total_amount'] is String
+              ? double.tryParse(json['total_amount']) ?? 0.0
+              : (json['total_amount'] as num?)?.toDouble() ?? 0.0,
+          splitCount: json['split_count'] is String
+              ? int.tryParse(json['split_count']) ?? 0
+              : json['split_count'] as int? ?? 0,
+          description: json['description'] ?? '',
+          transactionType:
+              TransactionTypeParsing.fromString(json['transaction_type'] ?? 'debt'),
+          transactionDate: DateTime.tryParse(json['transaction_date'] ?? '') ?? DateTime.now(),
+          createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+          createdBy: json['created_by'] ?? '',
+          updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+          ledgerType: ledger.EnumParsing.fromString(json['ledger_type'] ?? 'individual'),
+          splitDetails: splitDetails,
+          groupId: json['group_id'] ?? '');
 
-    final localTransaction = LocalTransaction(
-        ledgerId: json['ledger_id'],
-        transaction: transaction,
-        receipt: EnumParsing.fromString(json['receipt']));
+      final localTransaction = LocalTransaction(
+          ledgerId: json['ledger_id'] ?? '',
+          transaction: transaction,
+          receipt: EnumParsing.fromString(json['receipt'] ?? 'delivered'));
 
-    localTransaction._id = json['id'];
-    return localTransaction;
+      localTransaction._id = json['id'];
+      return localTransaction;
+    } catch (e) {
+      print('Error parsing LocalTransaction from map: $e');
+      print('JSON data: $json');
+      rethrow;
+    }
   }
 }

@@ -1,8 +1,13 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:splitemate/utils/const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:splitemate/utils/const.dart';
+import 'package:splitemate/utils/firebase_config.dart';
+import 'package:splitemate/exceptions/exceptions.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:splitemate/providers/user_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:splitemate/models/current_user.dart';
 
 class ApiService {
   static ApiService? _instance;
@@ -57,42 +62,24 @@ class ApiService {
   }
 
   // HTTP Methods
-  Future<Response> get(String path,
-      {Map<String, dynamic>? queryParameters, Options? options}) async {
-    return await dio.get(path,
-        queryParameters: queryParameters, options: options);
+  Future<Response> get(String path) async {
+    return await dio.get(path);
   }
 
-  Future<Response> post(String path,
-      {dynamic data,
-      Map<String, dynamic>? queryParameters,
-      Options? options}) async {
-    return await dio.post(path,
-        data: data, queryParameters: queryParameters, options: options);
+  Future<Response> post(String path, [dynamic data]) async {
+    return await dio.post(path, data: data);
   }
 
-  Future<Response> patch(String path,
-      {dynamic data,
-      Map<String, dynamic>? queryParameters,
-      Options? options}) async {
-    return await dio.patch(path,
-        data: data, queryParameters: queryParameters, options: options);
+  Future<Response> patch(String path, [dynamic data]) async {
+    return await dio.patch(path, data: data);
   }
 
-  Future<Response> put(String path,
-      {dynamic data,
-      Map<String, dynamic>? queryParameters,
-      Options? options}) async {
-    return await dio.put(path,
-        data: data, queryParameters: queryParameters, options: options);
+  Future<Response> put(String path, [dynamic data]) async {
+    return await dio.put(path, data: data);
   }
 
-  Future<Response> delete(String path,
-      {dynamic data,
-      Map<String, dynamic>? queryParameters,
-      Options? options}) async {
-    return await dio.delete(path,
-        data: data, queryParameters: queryParameters, options: options);
+  Future<Response> delete(String path) async {
+    return await dio.delete(path);
   }
 
   Future<void> _handleTokenRefresh(
@@ -184,12 +171,52 @@ class ApiService {
       if (response.statusCode == 200 && response.data != null) {
         final newAccessToken = response.data['access'];
         await prefs.setString('access_token', newAccessToken);
+        
+        // Update the UserProvider with the new token
+        await _updateUserProviderToken(newAccessToken);
+        
         return newAccessToken;
       }
       return null;
     } catch (e) {
       print('Token refresh failed: $e');
       return null;
+    }
+  }
+
+  Future<void> _updateUserProviderToken(String newAccessToken) async {
+    try {
+      // Get the current user data from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+      final userName = prefs.getString('user_name');
+      final userEmail = prefs.getString('user_email');
+      final userImageUrl = prefs.getString('user_image_url');
+      final refreshToken = prefs.getString('refresh_token');
+      final inviteToken = prefs.getString('invite_token');
+      
+      if (userId != null && userName != null && userEmail != null) {
+        // Create a new CurrentUser with the updated token
+        final updatedUser = CurrentUser(
+          id: userId,
+          name: userName,
+          email: userEmail,
+          imageUrl: userImageUrl ?? '',
+          accessToken: newAccessToken,
+          refreshToken: refreshToken ?? '',
+          totalOwed: 0.0, // These will be updated when user data is fetched
+          totalDue: 0.0,
+          netBalance: 0.0,
+          inviteToken: inviteToken ?? '',
+        );
+        
+        // Note: We can't directly access UserProvider here since this is a service
+        // The UserProvider will be updated when the next API call is made
+        // or when the user navigates to a screen that can access the context
+        print('Token refreshed and saved. New token: $newAccessToken');
+      }
+    } catch (e) {
+      print('Error updating UserProvider token: $e');
     }
   }
 

@@ -64,31 +64,51 @@ class AuthService {
 
   Future<void> _initializeGoogleSignIn() async {
     try {
+      print('AuthService: Initializing Google Sign-In...');
       await _googleSignIn.initialize(
           serverClientId: FirebaseConfig.webClientId);
       _isGoogleSignInInitialized = true;
+      print('AuthService: Google Sign-In initialized successfully');
     } catch (e) {
-      print('Failed to initialize Google Sign-In: $e');
+      print('AuthService: Failed to initialize Google Sign-In: $e');
+      print('AuthService: Web Client ID: ${FirebaseConfig.webClientId}');
+      _isGoogleSignInInitialized = false;
     }
   }
 
   Future<void> _ensureGoogleSignInInitialized() async {
     if (!_isGoogleSignInInitialized) {
+      print('AuthService: Google Sign-In not initialized, attempting to initialize...');
       await _initializeGoogleSignIn();
+    }
+    
+    if (!_isGoogleSignInInitialized) {
+      throw Exception('Google Sign-In could not be initialized. Please check your Firebase configuration.');
     }
   }
 
   Future<Map<String, dynamic>?> externalLogin() async {
     try {
+      print('AuthService: Starting external login...');
       await _ensureGoogleSignInInitialized();
+      
+      print('AuthService: Authenticating with Google...');
       final GoogleSignInAccount user = await _googleSignIn.authenticate(
         scopeHint: ['email', 'displayName', 'photoUrl'],
       );
+      
+      if (user == null) {
+        print('AuthService: Google authentication cancelled by user');
+        return null;
+      }
+      
+      print('AuthService: Google authentication successful for: ${user.email}');
       String email = user.email;
       String name = user.displayName ?? '';
       String imageUrl = user.photoUrl ?? '';
       String userSource = 'google';
 
+      print('AuthService: Calling external-auth API...');
       final response = await _dio?.post('/user/external-auth', data: {
         'email': email,
         'name': name,
@@ -96,8 +116,11 @@ class AuthService {
         'user_source': userSource
       });
 
+      print('AuthService: API response status: ${response?.statusCode}');
       if (response?.statusCode == 200 || response?.statusCode == 201) {
         var data = response?.data;
+        print('AuthService: API response data received');
+        
         String accessToken = data['tokens']['access'];
         String refreshToken = data['tokens']['refresh'];
 
@@ -108,6 +131,7 @@ class AuthService {
         String imageUrl = userData['image_url'];
         Map<String, dynamic> balance = userData['balance'];
 
+        print('AuthService: Saving user data...');
         await saveUserData(
             accessToken: accessToken,
             refreshToken: refreshToken,
@@ -117,22 +141,32 @@ class AuthService {
             imageUrl: imageUrl,
             balance: jsonEncode(balance),
             inviteToken: userData['invite_token']);
+        
+        print('AuthService: External login completed successfully');
         return {
           'id': userId,
           'email': userEmail,
           'name': userName,
           'balance': balance,
           'image_url': imageUrl,
+          'invite_token': userData['invite_token'], // Add invite_token to response
           'tokens': {
             'access': accessToken,
             'refresh': refreshToken,
           }
         };
       } else {
-        throw Exception('Unable to continue with Google');
+        print('AuthService: API request failed with status: ${response?.statusCode}');
+        print('AuthService: Response data: ${response?.data}');
+        throw Exception('Unable to continue with Google. Server returned: ${response?.statusCode}');
       }
     } catch (e) {
-      throw Exception('An unexpected error occurred.');
+      print('AuthService: External login error: $e');
+      if (e is Exception) {
+        rethrow;
+      } else {
+        throw Exception('An unexpected error occurred during Google authentication: $e');
+      }
     }
   }
 
@@ -191,8 +225,9 @@ class AuthService {
           'id': userId,
           'email': userEmail,
           'name': userName,
-          'balance': balance,
           'image_url': imageUrl,
+          'balance': balance,
+          'invite_token': userData['invite_token'], // Add invite_token to response
           'tokens': {
             'access': accessToken,
             'refresh': refreshToken,
@@ -258,6 +293,7 @@ class AuthService {
           'name': userName,
           'image_url': imageUrl,
           'balance': balance,
+          'invite_token': userData['invite_token'], // Add invite_token to response
           'tokens': {'refresh': '', 'access': ''}
         };
       } else {
@@ -337,6 +373,7 @@ class AuthService {
           String name = data['name'];
           String email = data['email'];
           String imageUrl = data['image_url'];
+          String inviteToken = data['invite_token'];
           String accessToken = data['tokens']['access'];
           String refreshToken = data['tokens']['refresh'];
           Map<String, dynamic> balance = data['balance'];
@@ -348,13 +385,14 @@ class AuthService {
               accessToken: accessToken,
               refreshToken: refreshToken,
               balance: jsonEncode(balance),
-              inviteToken: data['invite_token']);
+              inviteToken: inviteToken);
           return {
             'id': data['id'],
             'name': data['name'],
             'email': data['email'],
             'image_url': data['image_url'],
             'balance': balance,
+            'invite_token': inviteToken,
             'tokens': {'access': accessToken, 'refresh': refreshToken},
           };
         } else {

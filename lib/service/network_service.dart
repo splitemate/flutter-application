@@ -1,26 +1,35 @@
+import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/material.dart';
 
-class NetworkService with ChangeNotifier {
+class NetworkService {
   static final NetworkService _instance = NetworkService._internal();
   factory NetworkService() => _instance;
+  NetworkService._internal();
 
-  NetworkService._internal() {
-    _monitorNetworkStatus();
+  Future<bool> isConnected() async {
+    try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        return false;
+      }
+      
+      // Additional check to ensure internet connectivity
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
-  final Connectivity _connectivity = Connectivity();
-  bool _isConnected = true;
-
-  bool get isConnected => _isConnected;
-
-  void _monitorNetworkStatus() {
-    _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      bool newStatus = results.any((result) => result != ConnectivityResult.none);
-      if (_isConnected != newStatus) {
-        _isConnected = newStatus;
-        notifyListeners();
-      }
+  Stream<bool> get connectivityStream {
+    return Connectivity().onConnectivityChanged.map((result) {
+      return result != ConnectivityResult.none;
     });
+  }
+
+  Future<void> waitForConnection() async {
+    while (!await isConnected()) {
+      await Future.delayed(Duration(seconds: 2));
+    }
   }
 }

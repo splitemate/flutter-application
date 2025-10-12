@@ -1,36 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import 'package:splitemate/service/sync_service.dart';
-import 'package:splitemate/states_management/bloc/activity/activity_bloc.dart';
-import 'package:splitemate/states_management/home/activity_cubit.dart';
-import 'package:splitemate/theme.dart';
-import 'package:splitemate/viewmodels/activity_view_model.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:splitemate/colors.dart';
+import 'package:splitemate/data/datasource/datasource_contract.dart';
+import 'package:splitemate/data/datasource/sqflite_datasource.dart';
+import 'package:splitemate/data/factories/db_factory.dart';
+import 'package:splitemate/exceptions/exceptions.dart';
+import 'package:splitemate/models/current_user.dart';
 import 'package:splitemate/providers/user_provider.dart';
-import 'package:splitemate/router_generator.dart';
+import 'package:splitemate/repository/repository_store.dart';
+import 'package:splitemate/routes.dart';
 import 'package:splitemate/screens/dashboard.dart';
+import 'package:splitemate/screens/error.dart';
+import 'package:splitemate/screens/on_boarding.dart';
+import 'package:splitemate/service/init_auth.dart';
+import 'package:splitemate/service/ws/ws_service.dart';
+import 'package:splitemate/service/message_stream_service.dart';
+import 'package:splitemate/states_management/bloc/activity/activity_bloc.dart';
 import 'package:splitemate/states_management/bloc/bnb/bnb_bloc.dart';
 import 'package:splitemate/states_management/bloc/change_pw/change_pw_bloc.dart';
 import 'package:splitemate/states_management/bloc/external_auth/external_auth_bloc.dart';
 import 'package:splitemate/states_management/bloc/forgot_pw/forgot_pw_bloc.dart';
 import 'package:splitemate/states_management/bloc/otp/otp_bloc.dart';
 import 'package:splitemate/states_management/bloc/signin/signin_bloc.dart';
+import 'package:splitemate/states_management/bloc/signup/signup_bloc.dart';
 import 'package:splitemate/states_management/bloc/splash/splash_bloc.dart';
-import 'package:splitemate/data/factories/db_factory.dart';
-import 'package:splitemate/data/datasource/datasource_contract.dart';
-import 'package:splitemate/data/datasource/sqflite_datasource.dart';
-import 'package:splitemate/models/current_user.dart';
-import 'package:splitemate/repository/repository_store.dart';
-import 'package:splitemate/service/init_auth.dart';
-import 'package:splitemate/service/ws/ws_service.dart';
-import 'package:splitemate/service/message_stream_service.dart';
-import 'package:splitemate/screens/home/home_router.dart';
-import 'package:splitemate/screens/on_boarding.dart';
 import 'package:splitemate/states_management/bloc/transaction/transaction_bloc.dart';
+import 'package:splitemate/states_management/home/activity_cubit.dart';
 import 'package:splitemate/states_management/home/ledgers_cubit.dart';
 import 'package:splitemate/viewmodels/ledgers_view_model.dart';
+import 'package:splitemate/viewmodels/activity_view_model.dart';
 import 'package:splitemate/service/logout_service.dart';
+import 'package:splitemate/theme.dart';
+import 'package:splitemate/router_generator.dart';
+import 'package:splitemate/screens/home/home_router.dart';
+import 'package:sqflite/sqflite.dart';
 
 class CompositionRoot extends StatefulWidget {
   const CompositionRoot({super.key});
@@ -52,7 +56,8 @@ class _CompositionRootState extends State<CompositionRoot> {
   CurrentUser selfUser = CurrentUser.empty();
   late MessageStreamService messageStreamService;
   Map<String, dynamic> userDetailsMap = {};
-  late SyncService syncService;
+  // SyncService - will be used when implementing offline sync
+  // final syncService = SyncService();
 
   @override
   void initState() {
@@ -73,9 +78,9 @@ class _CompositionRootState extends State<CompositionRoot> {
     messageStreamService = MessageStreamService(ws);
     ledgersCubit = LedgersCubit(viewModel);
     activitiesCubit = ActivitiesCubit(activitiesViewModel);
-    syncService =
-        SyncService(authService: _authService, datasource: datasource);
-    await syncService.syncData();
+    // SyncService
+    // final syncService = SyncService();
+    // syncService.syncData();
 
     if (_accessToken.isNotEmpty) {
       try {
@@ -93,7 +98,7 @@ class _CompositionRootState extends State<CompositionRoot> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<void>(
-      future: _initFuture, // Use stored future
+      future: _initFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return _buildLoadingScreen(context);
@@ -111,39 +116,61 @@ class _CompositionRootState extends State<CompositionRoot> {
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider.value(value: ledgersCubit),
-        BlocProvider.value(value: activitiesCubit),
-        BlocProvider.value(value: TransactionBloc(messageStreamService)),
-        BlocProvider.value(value: ActivityBloc(messageStreamService)),
+        ChangeNotifierProvider(
+          create: (_) {
+            final userProvider = UserProvider();
+            if (_accessToken.isNotEmpty && selfUser.id.isNotEmpty) {
+              final updatedUser = CurrentUser(
+                id: selfUser.id,
+                name: selfUser.name,
+                email: selfUser.email,
+                imageUrl: selfUser.imageUrl,
+                accessToken: _accessToken,
+                refreshToken: selfUser.refreshToken,
+                totalOwed: selfUser.totalOwed,
+                totalDue: selfUser.totalDue,
+                netBalance: selfUser.netBalance,
+                inviteToken: selfUser.inviteToken,
+              );
+              userProvider.setUser(updatedUser);
+              print('CompositionRoot: UserProvider initialized with user ID: ${updatedUser.id}, Token: ${updatedUser.accessToken.isNotEmpty ? "YES" : "NO"}');
+            }
+            return userProvider;
+          },
+        ),
+        // Then create the blocs that need UserProvider
         BlocProvider<SignInBloc>(
-          create: (_) => SignInBloc(
+          create: (context) => SignInBloc(
             authRepo: repositoryStore.authRepository,
             userProvider: Provider.of<UserProvider>(context, listen: false),
           ),
         ),
         BlocProvider<OtpBloc>(
-          create: (_) => OtpBloc(
+          create: (context) => OtpBloc(
             authRepo: repositoryStore.authRepository,
             userProvider: Provider.of<UserProvider>(context, listen: false),
           ),
         ),
+        BlocProvider<ExternalAuthBloc>(
+          create: (context) => ExternalAuthBloc(
+            authRepo: repositoryStore.authRepository,
+            userProvider: Provider.of<UserProvider>(context, listen: false),
+          ),
+        ),
+        // Other blocs that don't need UserProvider
         BlocProvider<ChangePWBloc>(
           create: (_) => ChangePWBloc(authRepo: repositoryStore.authRepository),
         ),
         BlocProvider<ForgotPWBloc>(
           create: (_) => ForgotPWBloc(authRepo: repositoryStore.authRepository),
         ),
-        BlocProvider<ExternalAuthBloc>(
-          create: (_) => ExternalAuthBloc(
-            authRepo: repositoryStore.authRepository,
-            userProvider: Provider.of<UserProvider>(context, listen: false),
-          ),
-        ),
         BlocProvider<SplashBloc>(create: (_) => SplashBloc()),
         BlocProvider<BnbBloc>(create: (_) => BnbBloc()),
-        ChangeNotifierProvider(
-          create: (_) => UserProvider()..setUser(selfUser),
-        ),
+        // Cubits and other providers
+        BlocProvider.value(value: ledgersCubit),
+        BlocProvider.value(value: activitiesCubit),
+        BlocProvider.value(value: TransactionBloc(messageStreamService)),
+        BlocProvider.value(value: ActivityBloc(messageStreamService)),
         Provider<HomeRouter>(
           create: (_) => HomeRouter(),
         ),

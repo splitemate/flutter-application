@@ -88,8 +88,8 @@ class _QRScannerScreenState extends State<QRScannerScreen>
           friend: friend,
           isAlreadyFriend: isAlreadyFriend,
           onClose: () {
-            Navigator.of(context).pop(); // Close dialog
-            Navigator.of(context).pop(); // Return to profile
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
           },
         );
       },
@@ -265,7 +265,6 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             },
           ),
 
-          // Overlay UI
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -282,7 +281,6 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             ),
           ),
 
-          // Scanning frame
           Center(
             child: Container(
               width: size.width * 0.7,
@@ -296,7 +294,6 @@ class _QRScannerScreenState extends State<QRScannerScreen>
               ),
               child: Stack(
                 children: [
-                  // Animated scanning line
                   AnimatedBuilder(
                     animation: _animation,
                     builder: (context, child) {
@@ -386,7 +383,6 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             ),
           ),
 
-          // Instructions and manual input button
           Positioned(
             bottom: size.height * 0.05,
             left: 0,

@@ -36,7 +36,7 @@ class ExternalAuthBloc extends Bloc<ExternalAuthEvent, ExternalAuthState> {
             totalOwed: user['balance']['total_owed'],
             netBalance: user['balance']['net_balance'],
             accessToken: user['tokens']['access'],
-            refreshToken: user['tokens']['access'],
+            refreshToken: user['tokens']['refresh'],
             inviteToken: user['invite_token'] ?? '',
           ));
           emit(state.copyWith(appStatus: OAuthRequestSuccess()));
@@ -44,6 +44,7 @@ class ExternalAuthBloc extends Bloc<ExternalAuthEvent, ExternalAuthState> {
           emit(state.copyWith(appStatus: OAuthRequestFailed()));
         }
       } catch (e) {
+        print('ExternalAuth Error: $e');
         emit(state.copyWith(appStatus: OAuthRequestFailed()));
       }
     }

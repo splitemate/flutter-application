@@ -102,7 +102,6 @@ class _QRCodeScreenState extends State<QRCodeScreen>
   Future<void> _regenerateInviteToken(BuildContext context) async {
     if (_isRegenerating) return;
 
-    // Store context at the beginning to avoid accessing deactivated widgets
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
 
@@ -118,13 +117,8 @@ class _QRCodeScreenState extends State<QRCodeScreen>
         final newToken = response.data['invite_token'];
 
         if (newToken != null && newToken.isNotEmpty) {
-          // Update provider
           userProvider.updateInviteToken(newToken);
-
-          // Update local storage
           await userProvider.saveUserData();
-
-          // Check if widget is still mounted before showing snackbar
           if (mounted) {
             scaffoldMessenger.showSnackBar(
               const SnackBar(
@@ -140,7 +134,6 @@ class _QRCodeScreenState extends State<QRCodeScreen>
         throw Exception('Failed to regenerate token');
       }
     } catch (e) {
-      // Check if widget is still mounted before showing snackbar
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(
@@ -150,7 +143,6 @@ class _QRCodeScreenState extends State<QRCodeScreen>
         );
       }
     } finally {
-      // Check if widget is still mounted before calling setState
       if (mounted) {
         setState(() {
           _isRegenerating = false;
@@ -160,7 +152,6 @@ class _QRCodeScreenState extends State<QRCodeScreen>
   }
 
   void _copyInviteToken(BuildContext context) {
-    // Store context at the beginning to avoid accessing deactivated widgets
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final token = userProvider.user.inviteToken;
@@ -192,7 +183,6 @@ class _QRCodeScreenState extends State<QRCodeScreen>
     Size size = MediaQuery.of(context).size;
     final userProvider = Provider.of<UserProvider>(context);
     final user = userProvider.user;
-
     return Scaffold(
       backgroundColor: kWhiteColor,
       appBar: AppBar(
@@ -240,7 +230,7 @@ class _QRCodeScreenState extends State<QRCodeScreen>
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: kBlackColor.withOpacity(0.08),
+                            color: kBlackColor.withValues(alpha: 0.08),
                             blurRadius: 10,
                             offset: const Offset(0, 5),
                           ),
@@ -381,7 +371,7 @@ class _QRCodeScreenState extends State<QRCodeScreen>
                               color: kWhiteColor,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                  color: kGreyColor.withOpacity(0.3)),
+                                  color: kGreyColor.withValues(alpha: 0.3)),
                             ),
                             child: Column(
                               children: [
@@ -457,14 +447,18 @@ class _QRCodeScreenState extends State<QRCodeScreen>
                                         ),
                                         const Spacer(),
                                         Expanded(
-                                          child: Text(
-                                            currentUser.inviteToken.isNotEmpty
-                                                ? currentUser.inviteToken
-                                                : 'No token available',
-                                            style: TextStyle(
-                                              color: kBlackColor,
-                                              fontSize: size.width * 0.03,
-                                              fontFamily: 'GT-Walsheim-Pro',
+                                          child: FittedBox(
+                                            alignment: Alignment.centerLeft,
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              currentUser.inviteToken.isNotEmpty
+                                                  ? currentUser.inviteToken
+                                                  : 'No token available',
+                                              style: TextStyle(
+                                                color: kBlackColor,
+                                                fontSize: size.width * 0.03,
+                                                fontFamily: 'GT-Walsheim-Pro',
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -544,8 +538,8 @@ class _QRCodeScreenState extends State<QRCodeScreen>
                           decoration: BoxDecoration(
                             color: kStockColor,
                             borderRadius: BorderRadius.circular(12),
-                            border:
-                                Border.all(color: kGreyColor.withOpacity(0.3)),
+                            border: Border.all(
+                                color: kGreyColor.withValues(alpha: 0.3)),
                           ),
                           child: TextButton.icon(
                             onPressed: () {

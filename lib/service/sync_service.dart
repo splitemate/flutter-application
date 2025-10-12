@@ -1,77 +1,68 @@
-import 'package:splitemate/models/activity.dart';
-import 'package:splitemate/models/transaction_wrapper.dart';
-import 'package:splitemate/service/init_auth.dart';
+import 'package:splitemate/service/network_service.dart';
+import 'package:splitemate/service/api_service.dart';
 import 'package:splitemate/data/datasource/datasource_contract.dart';
 
 class SyncService {
-  // TODO: Need to optimize this function
-  final InitAuthService authService;
-  final IDatasource datasource;
+  static final SyncService _instance = SyncService._internal();
+  factory SyncService() => _instance;
+  SyncService._internal();
 
-  SyncService({
-    required this.authService,
-    required this.datasource,
-  });
+  final NetworkService _networkService = NetworkService();
+  final ApiService _apiService = ApiService();
 
-  Future<void> syncData() async {
-    int lastActivityId = await datasource.getLatestActivity();
-
-    bool hasMore = true;
-    int currentSinceId = lastActivityId;
-
-    Set<int> transactionIds = {};
-
-    while (hasMore) {
-      final responseData = await authService.fetchActivities(currentSinceId);
-      if (responseData == null) {
-        break;
-      }
-
-      final List<dynamic> results = responseData["activities"] ?? [];
-      hasMore = responseData["has_more"] ?? false;
-      final int nextSinceId = responseData["next_since_id"] ?? currentSinceId;
-
-      for (var activityData in results) {
-        try {
-          final activity = Activity.fromMap(activityData);
-          final int? transactionId = activity.transactionId.isNotEmpty
-              ? int.tryParse(activity.transactionId)
-              : null;
-          if (transactionId != null) {
-            await datasource.addActivity(activity);
-            transactionIds.add(transactionId);
-          }
-        } catch (e) {
-          print("Error processing activity: $e");
-        }
-      }
-      currentSinceId = nextSinceId;
+  /// Sync pending transactions when network is available
+  Future<void> syncPendingTransactions(IDatasource datasource) async {
+    if (!await _networkService.isConnected()) {
+      return;
     }
 
-    if (transactionIds.isNotEmpty) {
-      bool haseMoreTransaction = true;
-      int page = 1;
-      int limit = 50;
-      while (haseMoreTransaction) {
-        final responseData =
-            await authService.fetchTransactions(transactionIds, limit, page);
-        if (responseData == null) {
-          break;
-        }
-        final List<dynamic> results = responseData["transactions"] ?? [];
-        haseMoreTransaction = responseData["has_more"] ?? false;
-        page += 1;
-        List<TransactionWrapper> transactionWrapperList = [];
-        for (var txn in results) {
-          try {
-            final transactionWrapper = TransactionWrapper.fromJson(txn);
-            transactionWrapperList.add(transactionWrapper);
-          } catch (e) {}
-        }
-        if (transactionWrapperList.isNotEmpty) {
-          datasource.addBulkTransactions(transactionWrapperList);
-        }
-      }
+    try {
+      // TODO: Get pending transactions from local database
+      // List<LocalTransaction> pendingTransactions = await datasource.getPendingTransactions();
+      
+      // for (var transaction in pendingTransactions) {
+      //   try {
+      //     await _syncTransaction(transaction);
+      //     await datasource.markTransactionSynced(transaction.id);
+      //   } catch (e) {
+      //     print('Failed to sync transaction ${transaction.id}: $e');
+      //     // Keep it in pending state for next sync attempt
+      //   }
+      // }
+    } catch (e) {
+      print('Error during sync: $e');
     }
+  }
+
+  /// Sync a single transaction
+  Future<void> _syncTransaction(dynamic transaction) async {
+    // TODO: Implement transaction sync logic
+    // This would send the transaction to the server and update local status
+  }
+
+  /// Add transaction to pending sync queue
+  Future<void> addToPendingSync(IDatasource datasource, Map<String, dynamic> transactionData) async {
+    // TODO: Save transaction to local database with pending sync flag
+    // await datasource.addPendingTransaction(transactionData);
+  }
+
+  /// Retry failed transactions
+  Future<void> retryFailedTransactions(IDatasource datasource) async {
+    await _networkService.waitForConnection();
+    await syncPendingTransactions(datasource);
+  }
+
+  /// Check if there are pending transactions
+  Future<bool> hasPendingTransactions(IDatasource datasource) async {
+    // TODO: Check local database for pending transactions
+    // return await datasource.hasPendingTransactions();
+    return false;
+  }
+
+  /// Get count of pending transactions
+  Future<int> getPendingTransactionCount(IDatasource datasource) async {
+    // TODO: Get count from local database
+    // return await datasource.getPendingTransactionCount();
+    return 0;
   }
 }

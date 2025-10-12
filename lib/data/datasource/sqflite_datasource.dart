@@ -54,9 +54,13 @@ class SqfliteDatasource implements IDatasource {
           isParticipantCreated = true;
         }
 
+        // ✅ Remove split_details from transaction map before inserting
+        final transactionForDb = Map<String, dynamic>.from(transaction);
+        transactionForDb.remove('split_details'); // Remove split_details as it's not in the table schema
+
         await txn.insert(
           'transactions',
-          transaction,
+          transactionForDb, // Use the cleaned map
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
         await txn.update(

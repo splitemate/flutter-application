@@ -19,6 +19,7 @@ class FirebaseConfig {
         for (var oauthClient in oauthClients) {
           if (oauthClient['client_type'] == 3) {
             _webClientId = oauthClient['client_id'] as String;
+            print('FirebaseConfig: Web Client ID found: $_webClientId');
             break;
           }
         }
@@ -27,8 +28,24 @@ class FirebaseConfig {
 
       // Extract project ID
       _projectId = jsonData['project_info']['project_id'] as String;
+      print('FirebaseConfig: Project ID found: $_projectId');
+      
+      if (_webClientId == null) {
+        print('FirebaseConfig: Warning - No web client ID found in google-services.json');
+        print('FirebaseConfig: Available clients: ${clients.length}');
+        for (var client in clients) {
+          if (client['oauth_client'] != null) {
+            final oauthClients = client['oauth_client'] as List;
+            print('FirebaseConfig: Client has ${oauthClients.length} OAuth clients');
+            for (var oauthClient in oauthClients) {
+              print('FirebaseConfig: OAuth client type: ${oauthClient['client_type']}');
+            }
+          }
+        }
+      }
     } catch (e) {
-      print('Error loading Firebase config: $e');
+      print('FirebaseConfig: Error loading Firebase config: $e');
+      print('FirebaseConfig: Make sure google-services.json is properly placed in assets/');
     }
   }
 

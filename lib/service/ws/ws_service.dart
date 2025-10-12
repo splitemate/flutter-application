@@ -36,7 +36,7 @@ class WebSocketService {
     _lastUrl = url;
     _lastHeaders = headers;
 
-    if (!_networkService.isConnected) {
+    if (!await _networkService.isConnected()) {
       print("No internet connection. Waiting to reconnect...");
       await _waitForInternet();
     }
@@ -74,14 +74,12 @@ class WebSocketService {
 
   Future<void> disconnect() async {
     if (!_isConnected) return;
-    print("Disconnecting from WebSocket...");
     await _channel.sink.close();
     _isConnected = false;
   }
 
   Future<void> sendMessage(String message) async {
     if (!_isConnected) {
-      print("WebSocket is not connected. Cannot send message.");
       return;
     }
     _channel.sink.add(message);
@@ -92,14 +90,12 @@ class WebSocketService {
 
     _isReconnecting = true;
     Future.delayed(const Duration(seconds: 3), () async {
-      print("Attempting to reconnect...");
       await connect(_lastUrl!, _lastHeaders!);
       _isReconnecting = false;
     });
   }
 
   Future<void> _handleTokenRefreshAndReconnect() async {
-    print("Refreshing access token...");
     String? newToken = await _authService.refreshAccessToken();
     if (newToken != null) {
       print("New access token obtained. Reconnecting WebSocket...");
@@ -111,16 +107,6 @@ class WebSocketService {
   }
 
   Future<void> _waitForInternet() async {
-    Completer<void> completer = Completer<void>();
-
-    void listener() {
-      if (_networkService.isConnected) {
-        completer.complete();
-        _networkService.removeListener(listener);
-      }
-    }
-
-    _networkService.addListener(listener);
-    await completer.future;
+    await _networkService.waitForConnection();
   }
 }

@@ -33,6 +33,26 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateUserBalances({
+    required double totalOwed,
+    required double totalDue,
+    required double netBalance,
+  }) {
+    _user = CurrentUser(
+      id: _user.id,
+      name: _user.name,
+      email: _user.email,
+      imageUrl: _user.imageUrl,
+      accessToken: _user.accessToken,
+      refreshToken: _user.refreshToken,
+      totalOwed: totalOwed,
+      totalDue: totalDue,
+      netBalance: netBalance,
+      inviteToken: _user.inviteToken,
+    );
+    notifyListeners();
+  }
+
   Future<void> saveUserData() async {
     try {
       final prefs = await SharedPreferences.getInstance();

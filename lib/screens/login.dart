@@ -1,27 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:splitemate/colors.dart';
-import 'package:splitemate/data/datasource/datasource_contract.dart';
-import 'package:splitemate/data/datasource/sqflite_datasource.dart';
-import 'package:splitemate/data/factories/db_factory.dart';
-import 'package:splitemate/exceptions/exceptions.dart';
-import 'package:splitemate/routes.dart';
-import 'package:splitemate/service/init_auth.dart';
-import 'package:splitemate/service/sync_service.dart';
-import 'package:splitemate/states_management/bloc/auth_status.dart';
-import 'package:splitemate/widgets/popup/simple_alert_box.dart';
-import 'package:splitemate/widgets/auth_input/password_input_gradiant.dart';
-import 'package:splitemate/widgets/common/gradient_text_line_button.dart';
-import 'package:splitemate/repository/repository_store.dart';
-import 'package:splitemate/widgets/auth_input/auth_button.dart';
+import 'package:splitemate/models/current_user.dart';
 import 'package:splitemate/providers/user_provider.dart';
-import 'package:splitemate/widgets/auth_input/google_auth_button.dart';
-import 'package:splitemate/widgets/auth_input/email_gradiant_input.dart';
+import 'package:splitemate/routes.dart';
 import 'package:splitemate/states_management/bloc/signin/signin_bloc.dart';
-import 'package:splitemate/states_management/bloc/external_auth/external_auth_bloc.dart';
+import 'package:splitemate/states_management/bloc/auth_status.dart';
+import 'package:splitemate/widgets/auth_input/email_gradiant_input.dart';
+import 'package:splitemate/widgets/auth_input/password_input_gradiant.dart';
+import 'package:splitemate/widgets/popup/simple_alert_box.dart';
 import 'package:splitemate/widgets/popup/display_unknown_error.dart';
+import 'package:splitemate/widgets/auth_input/auth_button.dart';
+import 'package:splitemate/widgets/auth_input/google_auth_button.dart';
+import 'package:splitemate/widgets/common/gradient_text_line_button.dart';
+import 'package:splitemate/data/factories/db_factory.dart';
+import 'package:splitemate/repository/repository_store.dart';
+import 'package:splitemate/exceptions/exceptions.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Login extends StatefulWidget {
@@ -52,8 +48,7 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
-    var size = MediaQuery.of(context).size;
-    var horizontalPadding = size.width * 0.1;
+    Size size = MediaQuery.of(context).size;
     var topPadding = size.height * 0.05;
     final userProvider = Provider.of<UserProvider>(context);
     final repositoryStore = RepositoryStore(context: context);
@@ -64,13 +59,10 @@ class _LoginState extends State<Login> {
         providers: [
           BlocProvider(
             create: (context) => SignInBloc(
-                authRepo: repositoryStore.authRepository,
-                userProvider: userProvider),
+              authRepo: repositoryStore.authRepository,
+              userProvider: userProvider,
+            ),
           ),
-          BlocProvider(
-              create: (context) => ExternalAuthBloc(
-                  authRepo: repositoryStore.authRepository,
-                  userProvider: userProvider))
         ],
         child: MultiBlocListener(
           listeners: [
@@ -81,40 +73,18 @@ class _LoginState extends State<Login> {
                 final formStatus = state.appStatus;
                 if (formStatus is SubmissionFailed) {
                   if (formStatus.exception is UnAuthorized) {
-                    simpleAlertBox(context, 'Whoops!',
-                        'Hmm, we couldn\'t locate your account. Make sure your email and password is correct, and try logging in again.',
-                        size: size,
-                        buttonText: 'Understood',
-                        onTap: () => Navigator.of(context).pop());
-                  } else if (formStatus.exception is UserIsNotVerified) {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      otpPageRoute,
-                      arguments: {
-                        'reason': 'registration',
-                        'email': state.email,
-                      },
-                    );
+                    simpleAlertBox(context, 'Whoops!', 'Invalid credentials', size: size);
                   } else {
                     displayUnknownError(context);
                   }
-                }
-                if (formStatus is SubmissionSuccess) {
-                  _goToHome(
-                      context, userProvider.user.accessToken, userProvider);
-                }
-              },
-            ),
-            BlocListener<ExternalAuthBloc, ExternalAuthState>(
-              listenWhen: (previous, current) =>
-                  previous.appStatus != current.appStatus,
-              listener: (context, state) {
-                final formStatus = state.appStatus;
-                if (formStatus is OAuthRequestSuccess) {
-                  _goToHome(
-                      context, userProvider.user.accessToken, userProvider);
-                } else if (formStatus is OAuthRequestFailed) {
-                  displayUnknownError(context);
+                } else if (formStatus is UserIsNotVerified) {
+                  Navigator.pushNamed(context, otpPageRoute,
+                      arguments: {
+                        'reason': 'registration',
+                        'email': userProvider.user.email,
+                      });
+                } else if (formStatus is SubmissionSuccess) {
+                  _goToHome(context, userProvider.user.accessToken, userProvider);
                 }
               },
             ),
@@ -123,7 +93,7 @@ class _LoginState extends State<Login> {
             child: Center(
               child: SingleChildScrollView(
                 padding:
-                    EdgeInsets.symmetric(horizontal: horizontalPadding / 2),
+                    EdgeInsets.symmetric(horizontal: size.width * 0.1),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -220,13 +190,13 @@ class _LoginState extends State<Login> {
     );
   }
 
-  void _goToHome(BuildContext context, accessToken, userProvider) async {
+  void _goToHome(BuildContext context, String accessToken, UserProvider userProvider) async {
     final Database db = await LocalDatabaseFactory().getDatabase();
-    final IDatasource datasource = SqfliteDatasource(db);
-    final SyncService syncService = SyncService(authService: InitAuthService(), datasource: datasource);
-    await syncService.syncData();
     Navigator.pushNamedAndRemoveUntil(
         context, dashboardPageRoute, (route) => false,
-        arguments: {'me': userProvider.user, 'access_token': accessToken});
+        arguments: {
+          'me': userProvider.user,
+          'access_token': accessToken,
+        });
   }
 }

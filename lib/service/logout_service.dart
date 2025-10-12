@@ -98,11 +98,12 @@ class LogoutService {
 
       // List of tables to clear (instead of dropping all)
       final List<String> tablesToClear = [
+        'activity',
+        'user',
+        'receipts',
+        'split_details',
+        'ledger',
         'transactions',
-        'ledgers',
-        'activities',
-        'users',
-        'receipts'
       ];
 
       for (String tableName in tablesToClear) {
